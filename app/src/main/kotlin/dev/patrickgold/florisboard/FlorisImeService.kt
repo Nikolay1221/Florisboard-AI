@@ -65,6 +65,7 @@ import dev.patrickgold.florisboard.lib.util.launchActivity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import org.florisboard.lib.android.AndroidInternalR
 import org.florisboard.lib.android.AndroidVersion
 import org.florisboard.lib.android.showShortToastSync
@@ -280,6 +281,13 @@ class FlorisImeService : LifecycleInputMethodService() {
         super.onCreate()
         FlorisImeServiceReference = WeakReference(this)
         systemLocalesFlow.value = resources.configuration.locales
+        
+        // Force smartbar layout to ensure it is visible and has the AI keys
+        lifecycleScope.launch {
+            prefs.smartbar.enabled.set(true)
+            prefs.smartbar.layout.set(dev.patrickgold.florisboard.ime.smartbar.SmartbarLayout.SUGGESTIONS_ACTIONS_SHARED)
+            prefs.smartbar.actionArrangement.set(dev.patrickgold.florisboard.ime.smartbar.quickaction.QuickActionArrangement.Default)
+        }
 
         WindowCompat.setDecorFitsSystemWindows(window.window!!, false)
         windowController.onConfigurationChanged(resources.configuration)

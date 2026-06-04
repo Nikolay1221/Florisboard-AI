@@ -68,6 +68,11 @@ data class QuickActionArrangement(
         val Default = QuickActionArrangement(
             stickyAction = QuickAction.InsertKey(TextKeyData.VOICE_INPUT),
             dynamicActions = listOf(
+                QuickAction.InsertKey(TextKeyData(type = dev.patrickgold.florisboard.ime.text.key.KeyType.FUNCTION, code = dev.patrickgold.florisboard.ime.text.key.KeyCode.AI_STYLE_FORMAL)),
+                QuickAction.InsertKey(TextKeyData(type = dev.patrickgold.florisboard.ime.text.key.KeyType.FUNCTION, code = dev.patrickgold.florisboard.ime.text.key.KeyCode.AI_STYLE_FRIENDLY)),
+                QuickAction.InsertKey(TextKeyData(type = dev.patrickgold.florisboard.ime.text.key.KeyType.FUNCTION, code = dev.patrickgold.florisboard.ime.text.key.KeyCode.AI_STYLE_GRAMMAR)),
+                QuickAction.InsertKey(TextKeyData(type = dev.patrickgold.florisboard.ime.text.key.KeyType.FUNCTION, code = dev.patrickgold.florisboard.ime.text.key.KeyCode.AI_STYLE_FUNNY)),
+                QuickAction.InsertKey(TextKeyData(type = dev.patrickgold.florisboard.ime.text.key.KeyType.FUNCTION, code = dev.patrickgold.florisboard.ime.text.key.KeyCode.AI_READ_SCREENSHOT)),
                 QuickAction.InsertKey(TextKeyData.UNDO),
                 QuickAction.InsertKey(TextKeyData.REDO),
                 QuickAction.InsertKey(TextKeyData.SETTINGS),

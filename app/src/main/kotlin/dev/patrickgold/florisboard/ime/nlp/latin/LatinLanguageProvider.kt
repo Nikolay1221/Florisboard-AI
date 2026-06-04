@@ -43,6 +43,7 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
     private val appContext by context.appContext()
 
     private val wordData = guardedByLock { mutableMapOf<String, Int>() }
+    private var currentLang = ""
     private val wordDataSerializer = MapSerializer(String.serializer(), Int.serializer())
 
     override val providerId = ProviderId
@@ -66,12 +67,17 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
         // appContext.assets.copyRecursively()
 
         // The subtype we get here contains a lot of data, however we are only interested in subtype.primaryLocale and
-        // subtype.secondaryLocales.
-
+        val lang = subtype.primaryLocale.language
         wordData.withLock { wordData ->
-            if (wordData.isEmpty()) {
-                // Here we use readText() because the test dictionary is a json dictionary
-                val rawData = appContext.assets.readText("ime/dict/data.json")
+            if (currentLang != lang) {
+                wordData.clear()
+                currentLang = lang
+                val filename = if (lang == "ru") "ime/dict/ru.json" else "ime/dict/data.json"
+                val rawData = try {
+                    appContext.assets.readText(filename)
+                } catch (e: Exception) {
+                    "{}"
+                }
                 val jsonData = Json.decodeFromString(wordDataSerializer, rawData)
                 wordData.putAll(jsonData)
             }

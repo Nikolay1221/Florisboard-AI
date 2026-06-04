@@ -75,6 +75,34 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
         const val NAME = "florisboard-app-prefs"
     }
 
+    val ai = Ai()
+    inner class Ai {
+        val apiKey = string(
+            key = "ai__api_key",
+            default = ""
+        )
+        val formalPrompt = string(
+            key = "ai__formal_prompt",
+            default = "Отредактируй этот текст так, чтобы он был написан в максимально формальном, деловом и профессиональном стиле. Используй уважительное обращение, сложную структуру предложений и богатую лексику. Исключи любые сленговые выражения и смайлики. Выводи только готовый текст без предисловий."
+        )
+        val friendlyPrompt = string(
+            key = "ai__friendly_prompt",
+            default = "Отредактируй этот текст так, чтобы он звучал максимально дружелюбно, позитивно и открыто. Используй теплые слова, можешь добавить пару уместных смайликов, чтобы передать хорошую интонацию. Выводи только готовый текст без предисловий."
+        )
+        val grammarPrompt = string(
+            key = "ai__grammar_prompt",
+            default = "Исправь все орфографические, пунктуационные и грамматические ошибки в этом тексте. Сделай его стилистически правильным, но не меняй смысл. Выводи только готовый текст без предисловий и объяснений."
+        )
+        val funnyPrompt = string(
+            key = "ai__funny_prompt",
+            default = "перепиши этот текст так, чтобы он звучал максимально по-зумерски. используй актуальный сленг (кринж, рофл, вайб, чиллить и т.д.), пиши всё строго маленькими буквами. не используй вообще никаких смайликов. выводи только сам готовый текст без предисловий и объяснений."
+        )
+        val screenshotPrompt = string(
+            key = "ai__screenshot_prompt",
+            default = "Проанализируй изображение и извлеки из него текст. Оставь только полезный текст, без описания того, что еще есть на картинке, без вступлений."
+        )
+    }
+
     val clipboard = Clipboard()
     inner class Clipboard {
         val useInternalClipboard = boolean(
@@ -341,7 +369,7 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
     inner class Glide {
         val enabled = boolean(
             key = "glide__enabled",
-            default = false,
+            default = true,
         )
         val showTrail = boolean(
             key = "glide__show_trail",

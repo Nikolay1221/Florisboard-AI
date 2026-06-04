@@ -173,6 +173,10 @@ object Routes {
         object Media
 
         @Serializable
+        @Deeplink("settings/ai")
+        object Ai
+
+        @Serializable
         @Deeplink("settings/other")
         object Other
 
@@ -313,6 +317,8 @@ object Routes {
             composableWithDeepLink(Settings.Clipboard::class) { ClipboardScreen() }
 
             composableWithDeepLink(Settings.Media::class) { MediaScreen() }
+            
+            composableWithDeepLink(Settings.Ai::class) { dev.patrickgold.florisboard.app.settings.ai.AiSettingsScreen() }
 
             composableWithDeepLink(Settings.Other::class) { OtherScreen() }
             composableWithDeepLink(Settings.PhysicalKeyboard::class) { PhysicalKeyboardScreen() }

@@ -108,6 +108,11 @@ fun QuickAction.computeDisplayName(evaluator: ComputingEvaluator): String {
             } else {
                 R.string.general__empty_string
             }
+            KeyCode.AI_STYLE_FORMAL -> R.string.quick_action__ai_style_formal
+            KeyCode.AI_STYLE_FRIENDLY -> R.string.quick_action__ai_style_friendly
+            KeyCode.AI_STYLE_GRAMMAR -> R.string.quick_action__ai_style_grammar
+            KeyCode.AI_STYLE_FUNNY -> R.string.quick_action__ai_style_funny
+            KeyCode.AI_READ_SCREENSHOT -> R.string.quick_action__ai_read_screenshot
             KeyCode.NOOP -> R.string.quick_action__noop
             else -> R.string.general__invalid_fatal
         })
@@ -148,6 +153,11 @@ fun QuickAction.computeTooltip(evaluator: ComputingEvaluator): String {
             } else {
                 R.string.general__empty_string
             }
+            KeyCode.AI_STYLE_FORMAL -> R.string.quick_action__ai_style_formal__tooltip
+            KeyCode.AI_STYLE_FRIENDLY -> R.string.quick_action__ai_style_friendly__tooltip
+            KeyCode.AI_STYLE_GRAMMAR -> R.string.quick_action__ai_style_grammar__tooltip
+            KeyCode.AI_STYLE_FUNNY -> R.string.quick_action__ai_style_funny__tooltip
+            KeyCode.AI_READ_SCREENSHOT -> R.string.quick_action__ai_read_screenshot__tooltip
             KeyCode.NOOP -> R.string.quick_action__noop__tooltip
             else -> R.string.general__invalid_fatal
         })

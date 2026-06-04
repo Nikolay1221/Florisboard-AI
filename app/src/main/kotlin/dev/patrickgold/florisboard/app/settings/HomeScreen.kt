@@ -146,6 +146,11 @@ fun HomeScreen() = FlorisScreen {
             onClick = { navController.navigate(Routes.Settings.Media) },
         )
         Preference(
+            icon = Icons.Default.SmartButton, // Or any suitable icon
+            title = "ИИ Функции",
+            onClick = { navController.navigate(Routes.Settings.Ai) },
+        )
+        Preference(
             icon = Icons.Default.Extension,
             title = stringRes(R.string.ext__home__title),
             onClick = { navController.navigate(Routes.Ext.Home) },

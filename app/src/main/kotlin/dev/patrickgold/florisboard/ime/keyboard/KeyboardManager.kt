@@ -83,6 +83,18 @@ import org.florisboard.lib.kotlin.collectLatestIn
 
 private val DoubleSpacePeriodMatcher = """([^.!?‽\s]\s)""".toRegex()
 
+enum class AiGenerationState {
+    IDLE, GENERATING, DONE, ERROR
+}
+
+data class AiUiState(
+    val state: AiGenerationState = AiGenerationState.IDLE,
+    val generatedText: String? = null,
+    val error: String? = null,
+    val currentStyle: dev.patrickgold.florisboard.ime.nlp.AiStyle? = null,
+    val currentSourceText: String? = null
+)
+
 class KeyboardManager(context: Context) : InputKeyEventReceiver {
     private val prefs by FlorisPreferenceStore
     private val appContext by context.appContext()
@@ -98,6 +110,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
 
     val resources = KeyboardManagerResources()
     val activeState = ObservableKeyboardState.new()
+    val aiUiState = MutableStateFlow(AiUiState())
     var smartbarVisibleDynamicActionsCount by mutableIntStateOf(0)
     private var lastToastReference = WeakReference<Toast>(null)
 
@@ -673,6 +686,119 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
         activeState.isCharHalfWidth = true
     }
 
+    private fun handleAiStyle(style: dev.patrickgold.florisboard.ime.nlp.AiStyle) {
+        val activeSelection = editorInstance.activeContent.selection
+        val textToProcess = if (activeSelection.isSelectionMode) {
+            editorInstance.activeContent.selectedText
+        } else {
+            editorInstance.activeContent.textBeforeSelection
+        }
+        if (textToProcess.isNullOrBlank()) {
+            appContext.showShortToastSync("Нет текста для обработки!")
+            return
+        }
+
+        executeAiGeneration(style, textToProcess.toString(), activeSelection.isSelectionMode, textToProcess.length)
+    }
+
+    fun executeAiGeneration(style: dev.patrickgold.florisboard.ime.nlp.AiStyle, text: String, isSelection: Boolean = false, selectionLength: Int = 0) {
+        activeState.imeUiMode = ImeUiMode.AI
+        aiUiState.value = AiUiState(
+            state = AiGenerationState.GENERATING,
+            currentStyle = style,
+            currentSourceText = text
+        )
+
+        val prompt = when(style) {
+            dev.patrickgold.florisboard.ime.nlp.AiStyle.FORMAL -> prefs.ai.formalPrompt.get()
+            dev.patrickgold.florisboard.ime.nlp.AiStyle.FRIENDLY -> prefs.ai.friendlyPrompt.get()
+            dev.patrickgold.florisboard.ime.nlp.AiStyle.GRAMMAR -> prefs.ai.grammarPrompt.get()
+            dev.patrickgold.florisboard.ime.nlp.AiStyle.FUNNY -> prefs.ai.funnyPrompt.get()
+        }
+
+        scope.launch {
+            val result = dev.patrickgold.florisboard.ime.nlp.GeminiApiClient.rewriteText(text, prompt)
+            if (result != null && !result.startsWith("ERROR:")) {
+                aiUiState.value = aiUiState.value.copy(
+                    state = AiGenerationState.DONE,
+                    generatedText = result
+                )
+                // We do NOT commit the text yet. The user will click 'Вставить текст'
+                // However, we save the selection metadata if they want to insert it later.
+            } else {
+                aiUiState.value = aiUiState.value.copy(
+                    state = AiGenerationState.ERROR,
+                    error = result ?: "Неизвестная ошибка ИИ"
+                )
+            }
+        }
+    }
+
+    fun commitAiText() {
+        val state = aiUiState.value
+        val textToInsert = state.generatedText ?: return
+        
+        val activeSelection = editorInstance.activeContent.selection
+        if (!activeSelection.isSelectionMode && state.currentSourceText != null) {
+            editorInstance.setSelection(activeSelection.start - state.currentSourceText.length, activeSelection.start)
+        }
+        editorInstance.commitText(textToInsert)
+        activeState.imeUiMode = ImeUiMode.TEXT
+        aiUiState.value = AiUiState() // Reset
+    }
+    
+    fun cancelAiGeneration() {
+        activeState.imeUiMode = ImeUiMode.TEXT
+        aiUiState.value = AiUiState() // Reset
+    }
+
+    private fun handleAiScreenshot() {
+        val clip = clipboardManager.primaryClip
+        if (clip != null && clip.type == dev.patrickgold.florisboard.ime.clipboard.provider.ItemType.IMAGE && clip.uri != null) {
+            activeState.imeUiMode = ImeUiMode.AI
+            aiUiState.value = AiUiState(
+                state = AiGenerationState.GENERATING,
+                currentSourceText = "Изображение из буфера обмена"
+            )
+            
+            scope.launch {
+                try {
+                    val inputStream = appContext.contentResolver.openInputStream(clip.uri)
+                    val bytes = inputStream?.readBytes()
+                    if (bytes != null) {
+                        val base64 = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+                        val mimeType = appContext.contentResolver.getType(clip.uri) ?: "image/png"
+                        val result = dev.patrickgold.florisboard.ime.nlp.GeminiApiClient.extractTextFromImage(base64, mimeType)
+                        if (result != null && !result.startsWith("ERROR:")) {
+                            aiUiState.value = aiUiState.value.copy(
+                                state = AiGenerationState.DONE,
+                                generatedText = result
+                            )
+                        } else {
+                            aiUiState.value = aiUiState.value.copy(
+                                state = AiGenerationState.ERROR,
+                                error = result ?: "Ошибка ИИ при чтении картинки"
+                            )
+                        }
+                    } else {
+                        aiUiState.value = aiUiState.value.copy(
+                            state = AiGenerationState.ERROR,
+                            error = "Не удалось прочитать картинку"
+                        )
+                    }
+                } catch (e: Exception) {
+                    dev.patrickgold.florisboard.lib.devtools.flogError { "Failed to read image for AI: ${e.message}" }
+                    aiUiState.value = aiUiState.value.copy(
+                        state = AiGenerationState.ERROR,
+                        error = e.message ?: "Ошибка чтения картинки"
+                    )
+                }
+            }
+        } else {
+            appContext.showShortToastSync("В буфере обмена нет картинки!")
+        }
+    }
+
     override fun onInputKeyDown(data: KeyData) {
         val windowController = FlorisImeService.windowControllerOrNull()
         windowController?.editor?.disableIfNoGestureInProgress()
@@ -775,6 +901,11 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             KeyCode.VIEW_PHONE2 -> activeState.keyboardMode = KeyboardMode.PHONE2
             KeyCode.VIEW_SYMBOLS -> activeState.keyboardMode = KeyboardMode.SYMBOLS
             KeyCode.VIEW_SYMBOLS2 -> activeState.keyboardMode = KeyboardMode.SYMBOLS2
+            KeyCode.AI_STYLE_FORMAL -> handleAiStyle(dev.patrickgold.florisboard.ime.nlp.AiStyle.FORMAL)
+            KeyCode.AI_STYLE_FRIENDLY -> handleAiStyle(dev.patrickgold.florisboard.ime.nlp.AiStyle.FRIENDLY)
+            KeyCode.AI_STYLE_GRAMMAR -> handleAiStyle(dev.patrickgold.florisboard.ime.nlp.AiStyle.GRAMMAR)
+            KeyCode.AI_STYLE_FUNNY -> handleAiStyle(dev.patrickgold.florisboard.ime.nlp.AiStyle.FUNNY)
+            KeyCode.AI_READ_SCREENSHOT -> handleAiScreenshot()
             else -> {
                 if (activeState.imeUiMode == ImeUiMode.MEDIA) {
                     nlpManager.getAutoCommitCandidate()?.let { commitCandidate(it) }

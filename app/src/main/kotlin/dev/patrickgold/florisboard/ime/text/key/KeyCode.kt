@@ -112,6 +112,12 @@ object KeyCode {
 
     const val URI_COMPONENT_TLD =           -255
 
+    const val AI_STYLE_FORMAL =             -401
+    const val AI_STYLE_FRIENDLY =           -402
+    const val AI_STYLE_GRAMMAR =            -403
+    const val AI_STYLE_FUNNY =              -404
+    const val AI_READ_SCREENSHOT =          -405
+
     const val SETTINGS =                    -301
 
     const val CURRENCY_SLOT_1 =             -801

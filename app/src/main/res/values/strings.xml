@@ -1160,4 +1160,16 @@
         <item quantity="other">{v} candidates</item>
     </plurals>
 
+    <!-- AI Features -->
+    <string name="quick_action__ai_style_formal">Formal ✨</string>
+    <string name="quick_action__ai_style_formal__tooltip">Rewrite formal</string>
+    <string name="quick_action__ai_style_friendly">Friendly ✨</string>
+    <string name="quick_action__ai_style_friendly__tooltip">Rewrite friendly</string>
+    <string name="quick_action__ai_style_grammar">Grammar ✨</string>
+    <string name="quick_action__ai_style_grammar__tooltip">Fix grammar</string>
+    <string name="quick_action__ai_style_funny">Sarcasm ✨</string>
+    <string name="quick_action__ai_style_funny__tooltip">Rewrite sarcastic</string>
+    <string name="quick_action__ai_read_screenshot">Screenshot 🖼️</string>
+    <string name="quick_action__ai_read_screenshot__tooltip">Extract text from clipboard image</string>
+
 </resources>

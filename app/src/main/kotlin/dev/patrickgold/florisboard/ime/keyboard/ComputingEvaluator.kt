@@ -174,6 +174,11 @@ fun ComputingEvaluator.computeLabel(data: KeyData): String? {
             KeyCode.KESHIDA -> {
                 evaluator.context()?.getString(R.string.key__view_keshida)
             }
+            KeyCode.AI_STYLE_FORMAL -> "👔"
+            KeyCode.AI_STYLE_FRIENDLY -> "😊"
+            KeyCode.AI_STYLE_GRAMMAR -> "📝"
+            KeyCode.AI_STYLE_FUNNY -> "🃏"
+            KeyCode.AI_READ_SCREENSHOT -> "🖼️"
             else -> null
         }
     }

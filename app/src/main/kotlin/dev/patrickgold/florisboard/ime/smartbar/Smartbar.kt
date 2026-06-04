@@ -35,8 +35,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.UnfoldLess
 import androidx.compose.material.icons.filled.UnfoldMore
 import androidx.compose.runtime.Composable
@@ -184,26 +183,20 @@ private fun SmartbarMainRow(modifier: Modifier = Modifier) {
             ) {
                 if (it) 180f else 0f
             }
-            val arrowIcon = if (flipToggles) {
-                Icons.AutoMirrored.Default.KeyboardArrowLeft
-            } else {
-                Icons.AutoMirrored.Default.KeyboardArrowRight
-            }
             val incognitoIcon = ImageVector.vectorResource(id = R.drawable.ic_incognito)
             val incognitoDisplayMode = prefs.keyboard.incognitoDisplayMode.collectAsState()
             val isIncognitoMode = keyboardManager.activeState.isIncognitoMode
-            val icon = if (isIncognitoMode) {
-                when (incognitoDisplayMode.value) {
-                    IncognitoDisplayMode.REPLACE_SHARED_ACTIONS_TOGGLE -> incognitoIcon
-                    IncognitoDisplayMode.DISPLAY_BEHIND_KEYBOARD -> arrowIcon
-                }
+            if (isIncognitoMode && incognitoDisplayMode.value == IncognitoDisplayMode.REPLACE_SHARED_ACTIONS_TOGGLE) {
+                SnyggIcon(imageVector = incognitoIcon)
             } else {
-                arrowIcon
+                if (sharedActionsExpanded) {
+                    SnyggIcon(imageVector = Icons.Default.Close)
+                } else {
+                    org.florisboard.lib.snygg.ui.SnyggText(
+                        text = "ИИ",
+                    )
+                }
             }
-            SnyggIcon(
-                modifier = Modifier.rotate(if (incognitoDisplayMode.value == IncognitoDisplayMode.DISPLAY_BEHIND_KEYBOARD) rotation else 0f),
-                imageVector = icon,
-            )
         }
     }
 
