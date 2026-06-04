@@ -20,6 +20,7 @@ import android.content.Context
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
 import dev.patrickgold.florisboard.ime.nlp.WordSuggestionCandidate
 import dev.patrickgold.florisboard.ime.text.keyboard.TextKey
+import dev.patrickgold.florisboard.editorInstance
 import dev.patrickgold.florisboard.keyboardManager
 import dev.patrickgold.florisboard.nlpManager
 import dev.patrickgold.florisboard.subtypeManager
@@ -43,10 +44,18 @@ class GlideTypingManager(context: Context) : GlideTypingGesture.Listener {
     private val keyboardManager by context.keyboardManager()
     private val nlpManager by context.nlpManager()
     private val subtypeManager by context.subtypeManager()
+    private val editorInstance by context.editorInstance()
 
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private var glideTypingClassifier = StatisticalGlideTypingClassifier(context)
     private var lastTime = System.currentTimeMillis()
+
+    private val sbertScorer = dev.patrickgold.florisboard.ime.nlp.sbert.SbertSemanticScorer(context)
+
+    init {
+        // Initialize SBERT scorer with model paths (if they exist in assets)
+        sbertScorer.initialize("ime/models/rubert_tiny2.tflite", "ime/models/vocab.txt")
+    }
 
     override fun onGlideComplete(data: GlideTypingGesture.Detector.PointerData) {
         updateSuggestionsAsync(MAX_SUGGESTION_COUNT, true) {
@@ -93,8 +102,18 @@ class GlideTypingManager(context: Context) : GlideTypingGesture.Listener {
             return
         }
 
+        val contextStr = editorInstance.activeContent.textBeforeSelection.takeLast(100)
+
         scope.launch(Dispatchers.Default) {
-            val suggestions = glideTypingClassifier.getSuggestions(MAX_SUGGESTION_COUNT, true)
+            var suggestions = glideTypingClassifier.getSuggestions(MAX_SUGGESTION_COUNT, true)
+            
+            // Re-rank suggestions using SBERT if we are committing and have context
+            if (commit && suggestions.size > 1 && contextStr.isNotBlank()) {
+                val scored = sbertScorer.scoreCandidates(contextStr, suggestions)
+                // The scorer returns Pair<String, Double> sorted by similarity.
+                // We pick the re-ranked strings.
+                suggestions = scored.map { it.first }
+            }
 
             withContext(Dispatchers.Main) {
                 val suggestionList = buildList {
