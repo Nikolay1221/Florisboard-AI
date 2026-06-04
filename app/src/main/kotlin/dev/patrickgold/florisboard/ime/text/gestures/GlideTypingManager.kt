@@ -109,10 +109,15 @@ class GlideTypingManager(context: Context) : GlideTypingGesture.Listener {
             
             // Re-rank suggestions using SBERT if we are committing and have context
             if (commit && suggestions.size > 1 && contextStr.isNotBlank()) {
-                val scored = sbertScorer.scoreCandidates(contextStr, suggestions)
+                val candidatesToScore = suggestions.take(4)
+                val remainingCandidates = suggestions.drop(4)
+                
+                val scored = sbertScorer.scoreCandidates(contextStr, candidatesToScore)
                 // The scorer returns Pair<String, Double> sorted by similarity.
-                // We pick the re-ranked strings.
-                suggestions = scored.map { it.first }
+                val reranked = scored.map { it.first }
+                
+                // Combine reranked top 4 with the remaining unscored candidates
+                suggestions = reranked + remainingCandidates
             }
 
             withContext(Dispatchers.Main) {

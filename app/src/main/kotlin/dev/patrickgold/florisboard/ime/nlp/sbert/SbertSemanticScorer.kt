@@ -47,6 +47,9 @@ class SbertSemanticScorer(private val context: Context) {
         return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength)
     }
 
+    private var cachedContextStr: String? = null
+    private var cachedContextEmbedding: FloatArray? = null
+
     /**
      * Scores the candidates based on how well they fit the preceding context.
      * Higher score means better semantic fit.
@@ -56,18 +59,21 @@ class SbertSemanticScorer(private val context: Context) {
             return candidates.map { it to 1.0 }
         }
 
-        // Tokenize context
-        val baseTokens = tokenizer!!.tokenize(contextStr, maxSeqLen)
+        // Cache or compute context embedding
+        val contextEmbedding = if (contextStr == cachedContextStr && cachedContextEmbedding != null) {
+            cachedContextEmbedding!!
+        } else {
+            val embedding = getEmbedding(contextStr) ?: return candidates.map { it to 1.0 }
+            cachedContextStr = contextStr
+            cachedContextEmbedding = embedding
+            embedding
+        }
         
-        // We will compute similarity for each candidate
         val results = mutableListOf<Pair<String, Double>>()
         
-        // Embed the context
-        val contextEmbedding = getEmbedding(contextStr) ?: return candidates.map { it to 1.0 }
-        
         for (candidate in candidates) {
-            val sentence = if (contextStr.isBlank()) candidate else "$contextStr $candidate"
-            val candidateEmbedding = getEmbedding(sentence)
+            // Embed just the candidate, not the whole sentence
+            val candidateEmbedding = getEmbedding(candidate)
             if (candidateEmbedding != null) {
                 val similarity = cosineSimilarity(contextEmbedding, candidateEmbedding)
                 results.add(candidate to similarity)

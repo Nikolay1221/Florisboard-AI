@@ -8,7 +8,7 @@ OUTPUT_DIR = "sbert_tflite"
 def export_model():
     print(f"Loading model {MODEL_NAME}...")
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-    model = TFAutoModel.from_pretrained(MODEL_NAME)
+    model = TFAutoModel.from_pretrained(MODEL_NAME, from_pt=True)
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     
