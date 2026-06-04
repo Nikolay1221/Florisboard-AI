@@ -111,21 +111,31 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
         allowPossiblyOffensive: Boolean,
         isPrivateSession: Boolean,
     ): List<SuggestionCandidate> {
-        return emptyList()
-        /*val word = content.composingText.ifBlank { "next" }
-        val suggestions = buildList {
-            for (n in 0 until maxCandidateCount) {
-                add(WordSuggestionCandidate(
-                    text = "$word$n",
-                    secondaryText = if (n % 2 == 1) "secondary" else null,
-                    confidence = 0.5,
-                    isEligibleForAutoCommit = false,//n == 0 && word.startsWith("auto"),
-                    // We set ourselves as the source provider so we can get notify events for our candidate
-                    sourceProvider = this@LatinLanguageProvider,
-                ))
-            }
+        val word = content.composingText.toString()
+        if (word.isBlank()) return emptyList()
+        val lowerWord = word.lowercase()
+        
+        val suggestions = wordData.withLock { wordDataMap ->
+            wordDataMap.entries.asSequence()
+                .filter { it.key.startsWith(lowerWord) }
+                .sortedByDescending { it.value }
+                .take(maxCandidateCount)
+                .map { entry ->
+                    val candidateText = if (word.isNotEmpty() && word[0].isUpperCase()) {
+                        entry.key.replaceFirstChar { if (it.isLowerCase()) it.titlecase(java.util.Locale.getDefault()) else it.toString() }
+                    } else {
+                        entry.key
+                    }
+                    dev.patrickgold.florisboard.ime.nlp.WordSuggestionCandidate(
+                        text = candidateText,
+                        secondaryText = null,
+                        confidence = entry.value / 255.0,
+                        isEligibleForAutoCommit = false,
+                        sourceProvider = this@LatinLanguageProvider,
+                    )
+                }.toList()
         }
-        return suggestions*/
+        return suggestions
     }
 
     override suspend fun notifySuggestionAccepted(subtype: Subtype, candidate: SuggestionCandidate) {

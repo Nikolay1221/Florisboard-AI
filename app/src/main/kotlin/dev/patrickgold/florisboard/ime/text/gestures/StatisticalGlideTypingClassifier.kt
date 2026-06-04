@@ -70,7 +70,11 @@ class StatisticalGlideTypingClassifier(context: Context) : GlideTypingClassifier
          * Describes the allowed length variance in a gesture. If a gesture is too long or too short, it is immediately
          * discarded to save cycles.
          */
-        private const val PRUNING_LENGTH_THRESHOLD = 8.42
+        /**
+         * Describes the allowed length variance in a gesture. If a gesture is too long or too short, it is immediately
+         * discarded to save cycles.
+         */
+        private const val PRUNING_LENGTH_THRESHOLD = 4.0
 
         /**
          * describes the number of points to sample a gesture at, i.e the resolution.
@@ -82,14 +86,14 @@ class StatisticalGlideTypingClassifier(context: Context) : GlideTypingClassifier
          * representing the same word. It's expressed for normalized gestures and is therefore
          * independent of the keyboard or key size.
          */
-        private const val SHAPE_STD = 22.08f
+        private const val SHAPE_STD = 14.0f
 
         /**
          * Standard deviation of the distribution of distances between the locations of two gestures
          * representing the same word. It's expressed as a factor of key radius as it's applied to
          * un-normalized gestures and is therefore dependent on the size of the keys/keyboard.
          */
-        private const val LOCATION_STD = 0.5109f
+        private const val LOCATION_STD = 0.35f
 
         /**
          * This is a very small cache that caches suggestions, so that they aren't recalculated e.g when releasing
@@ -220,7 +224,7 @@ class StatisticalGlideTypingClassifier(context: Context) : GlideTypingClassifier
                 val shapeProbability = calcGaussianProbability(shapeDistance, 0.0f, SHAPE_STD)
                 val locationProbability = calcGaussianProbability(locationDistance, 0.0f, LOCATION_STD * radius)
                 val frequency = 255f * nlpManager.getFrequencyForWord(currentSubtype!!, word).toFloat()
-                val confidence = 1.0f / (shapeProbability * locationProbability * frequency)
+                val confidence = 1.0f / (shapeProbability * locationProbability * frequency.pow(1.5f))
 
                 var candidateDistanceSortedIndex = 0
                 var duplicateIndex = Int.MAX_VALUE
