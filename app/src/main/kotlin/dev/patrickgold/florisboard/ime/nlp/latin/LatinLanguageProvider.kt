@@ -111,7 +111,9 @@ class LatinLanguageProvider(context: Context) : SpellingProvider, SuggestionProv
         allowPossiblyOffensive: Boolean,
         isPrivateSession: Boolean,
     ): List<SuggestionCandidate> {
-        val word = content.composingText.toString()
+        val word = content.composingText.ifEmpty { content.currentWordText }.ifEmpty {
+            content.textBeforeSelection.takeLastWhile { it.isLetter() }
+        }.toString()
         if (word.isBlank()) return emptyList()
         val lowerWord = word.lowercase()
         
